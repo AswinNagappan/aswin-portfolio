@@ -1,109 +1,91 @@
-gsap.registerPlugin(ScrollTrigger)
+const scene = new THREE.Scene()
 
-/* HERO ANIMATION */
-
-gsap.from(".hero-title",{
-y:-100,
-opacity:0,
-duration:1
-})
-
-/* SECTION SCROLL ANIMATIONS */
-
-gsap.utils.toArray(".section-title").forEach(title=>{
-
-gsap.from(title,{
-scrollTrigger:{
-trigger:title,
-start:"top 80%"
-},
-y:100,
-opacity:0,
-duration:1
-})
-
-})
-
-/* SKILL ANIMATION */
-
-gsap.from(".skill",{
-scrollTrigger:{
-trigger:"#skills",
-start:"top 80%"
-},
-y:100,
-opacity:0,
-stagger:0.2
-})
-
-/* PROJECT ANIMATION */
-
-gsap.from(".project",{
-scrollTrigger:{
-trigger:"#projects",
-start:"top 80%"
-},
-scale:0.8,
-opacity:0,
-stagger:0.3
-})
-
-/* THREEJS GALAXY */
-
-const scene=new THREE.Scene()
-
-const camera=new THREE.PerspectiveCamera(
+const camera = new THREE.PerspectiveCamera(
 75,
 window.innerWidth/window.innerHeight,
 0.1,
 1000
 )
 
-const renderer=new THREE.WebGLRenderer({
+const renderer = new THREE.WebGLRenderer({
 canvas:document.querySelector("#bg")
 })
 
 renderer.setPixelRatio(window.devicePixelRatio)
 renderer.setSize(window.innerWidth,window.innerHeight)
 
-camera.position.z=30
+camera.position.z = 50
 
-const starCount=10000
-const positions=new Float32Array(starCount*3)
+const nodes = []
+const nodeCount = 120
 
-for(let i=0;i<starCount;i++){
+const geometry = new THREE.SphereGeometry(0.4,8,8)
 
-const i3=i*3
-const radius=Math.random()*25
-const spin=radius*2
+const material = new THREE.MeshBasicMaterial({
+color:0x00ffcc
+})
 
-positions[i3]=Math.cos(spin)*radius
-positions[i3+1]=(Math.random()-0.5)*2
-positions[i3+2]=Math.sin(spin)*radius
+for(let i=0;i<nodeCount;i++){
+
+const node = new THREE.Mesh(geometry,material)
+
+node.position.x = (Math.random()-0.5)*80
+node.position.y = (Math.random()-0.5)*80
+node.position.z = (Math.random()-0.5)*80
+
+scene.add(node)
+
+nodes.push(node)
 
 }
 
-const geometry=new THREE.BufferGeometry()
-
-geometry.setAttribute(
-'position',
-new THREE.BufferAttribute(positions,3)
-)
-
-const material=new THREE.PointsMaterial({
-color:0xffffff,
-size:0.1
+const lineMaterial = new THREE.LineBasicMaterial({
+color:0x00ffcc,
+opacity:0.3,
+transparent:true
 })
 
-const stars=new THREE.Points(geometry,material)
+function connectNodes(){
 
-scene.add(stars)
+nodes.forEach(a=>{
+
+nodes.forEach(b=>{
+
+const distance = a.position.distanceTo(b.position)
+
+if(distance < 12){
+
+const points = []
+
+points.push(a.position)
+points.push(b.position)
+
+const lineGeometry = new THREE.BufferGeometry().setFromPoints(points)
+
+const line = new THREE.Line(lineGeometry,lineMaterial)
+
+scene.add(line)
+
+}
+
+})
+
+})
+
+}
+
+connectNodes()
 
 function animate(){
 
 requestAnimationFrame(animate)
 
-stars.rotation.y+=0.0005
+nodes.forEach(node=>{
+node.rotation.x += 0.002
+node.rotation.y += 0.002
+})
+
+scene.rotation.y += 0.0005
 
 renderer.render(scene,camera)
 
@@ -113,7 +95,7 @@ animate()
 
 window.addEventListener("resize",()=>{
 
-camera.aspect=window.innerWidth/window.innerHeight
+camera.aspect = window.innerWidth/window.innerHeight
 camera.updateProjectionMatrix()
 
 renderer.setSize(window.innerWidth,window.innerHeight)
